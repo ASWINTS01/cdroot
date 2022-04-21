@@ -1,0 +1,8 @@
+bookpl.txt -book,plsql trigger, finance mg
+cursor.txt - cursor eg
+employee.txt - all
+netsalaryp.txt = p
+plsqp.txt 
+procedure - proc eg
+sailor - sailor 
+salesman
