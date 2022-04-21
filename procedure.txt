@@ -1,0 +1,26 @@
+create or replace procedure incr_sal(empid in varchar2,inc in number)as
+d date;
+b number(8,2);
+bs number(8,2);
+begin
+select salary into b from res_emp where eid=empid;
+select sysdate into d from dual;
+bs:b+inc;
+insert into res_raise values(empid,b,d,bs);
+dbms_output.Put_line('Basic Salary='||b);
+dbms_output.Put_line('incremented salary ='||bs);
+exception
+when no_data_found then
+dbms_output.Put_line('EID doesnot exists');
+end;
+/
+
+
+
+declare
+e varchar2(10);
+in_sal number(8,2);
+begin
+incr_sal('&e',&in_sal);
+end;
+/
