@@ -1,0 +1,88 @@
+create table book1(
+book_name varchar(10),
+author_name varchar(10),
+price int,
+quantity int);
+
+insert into book1 values('Physics','Sam',100,25);
+insert into book1 values('Chem','Cam',500,75);
+insert into book1 values('Bio','Sam',750,15);
+insert into book1 values('Maths','Vam',50,250);
+insert into book1 values('LSD','Pam',220,125);
+
+1. Write a query to update the quantity by double in the table book.
+update book1 set quantity = 2 * quantity;
+2. List all the book_name whose price is greater than those of book named "Bio".
+select * from book1 where price > 50;
+3. Retrieve the list of author_name whose first letter is ’C’ along with the book_name
+and price.
+select author_name, book_name, price from book1 where author_name like 'C%';
+4. Write a PL/SQL Procedure to find the total number of books of same author.
+create or replace PROCEDURE book_count(c_isbn IN book_copies.isbn%TYPE)
+IS
+total number;
+
+BEGIN
+SELECT COUNT(*) INTO TOTAL
+FROM book_copies
+WHERE isbn = c_isbn;
+DBMS_OUTPUT.PUT_LINE('Book count: ' || total);
+END book_count;
+
+Write a PL/SQL Trigger to verify the data before insertion on assessment table
+CREATE TABLE employee_details
+(
+    EMP_ID number(10) primary key,
+    FIRST_NAME varchar2(50),
+    LAST_NAME varchar2(50),
+    DATE_OF_BIRTH date,
+    DATE_OF_DEATH date,
+    CREATED_BY varchar2(20),
+    CREATED_DATE date
+);
+
+CREATE OR REPLACE TRIGGER trg_before_emp_insr
+BEFORE INSERT
+  on employee_details
+  FOR EACH ROW 
+
+DECLARE
+emp_age number;
+
+BEGIN
+
+-- Finding employee age by date of birth
+SELECT MONTHS_BETWEEN(TO_DATE(sysdate,'DD-MON-YYYY'), TO_DATE(:new.DATE_OF_BIRTH,'DD-MON-YYYY'))/12 
+   INTO EMP_AGE FROM DUAL;
+
+   -- Check whether employee age is greater than 18 or not
+    IF (EMP_AGE < 18) THEN
+      RAISE_APPLICATION_ERROR(-20000,'Employee age must be greater than or equal to 18.');
+    END IF;
+
+    -- Allow only past date of death
+    IF(:new.DATE_OF_DEATH > sysdate) THEN
+      RAISE_APPLICATION_ERROR(-20000,'Date of death can not be Future date.');
+    END IF;          
+
+END;
+
+
+finance manager 
+
+
+declare
+cursor c_emp is select emp_code,salary from employee where deptno = 20;
+str_emp_code employee.emp_code%type;
+num_salary employee.salary%type;
+begin
+open c_emp;
+loop
+fetch c_emp into str_emp_code,num_salary;
+exit when c_emp%notfound;
+update employee set salary = num_salary + (num_salary*.05) where emp_code = str_emp_code;
+insert into emp_raise values(str_emp_code,sysdate,num_salary*0.05);
+end loop;
+close c_emp;
+end;
+/
