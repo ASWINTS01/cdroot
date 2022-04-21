@@ -1,0 +1,49 @@
+create table sailor(
+sid varchar(10) primary key,
+sname varchar(10),
+rating int,
+age int);
+create table boats(
+bid varchar(10) primary key,
+bname varchar(10),
+color varchar(10));
+create table reserves(
+sid varchar(10) references sailor,
+bid varchar(10) references boats,
+day date);
+
+insert into sailor values('S101','Sam',7,35);
+insert into sailor values('S102','Tam',3,25);
+insert into sailor values('S103','Pam',8,15);
+insert into sailor values('S104','Cam',2,65);
+insert into sailor values('S105','Lam',5,20);
+insert into sailor values('S106','Gam',7,75);
+
+
+insert into boats values('B101','Tos','Blue');
+insert into boats values('B102','Cos','Green');
+insert into boats values('B103','Sos','Red');
+insert into boats values('B104','Wos','Blue');
+insert into boats values('B105','Mos','Black');
+
+insert into reserves values('S101','B103','01-APR-2021');
+insert into reserves values('S101','B105','22-JUN-2021');
+insert into reserves values('S101','B104','13-SEP-2021');
+insert into reserves values('S102','B101','16-OCT-2021');
+insert into reserves values('S105','B102','30-DEC-2021');
+
+1. Find all information of sailors who have reserved boat number 101.
+ select sailor.* from sailor,reserves where sailor.sid = reserves.sid and bid = 'B101';
+2. Find the name of boat reserved by Bob.
+select bname from sailor,boats,reserves where sailor.sname ='Sam' and reserves.sid = sailor.sid and reserves.bid = boats.bid;
+3. Find the ids of sailors who have reserved a red boat or a green boat.
+select reserves.sid from boats,reserves where reserves.bid = boats.bid and color = 'Red' union select reserves.sid from boats,reserves where reserves.bid = boats.bid and color = 'Green';
+4. Find the average age of sailors for each rating level.
+select sailor.rating, avg(sailor.age) as avg_age from sailor group by sailor.rating;
+5.Find the average age of sailors for each rating level that has at least two sailors.
+select sailor.rating, avg(sailor.age) as avg_age from sailor group by sailor.rating having count(*) > 1;
+6.Find the names of sailors who have reserved a red boat, and list in the order of age.
+select sailor.sname,sailor.age from sailor,reserves,boats where reserves.sid = sailor.sid and boats.bid = reserves.bid and boats.color = 'Red' order by age;
+7.Find the name and the age of the youngest sailor
+select sailor.sname,sailor.age from sailor where sailor.age <= all (select age from sailor);
+
