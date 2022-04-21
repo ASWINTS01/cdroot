@@ -1,0 +1,78 @@
+1. Simple PL/SQL Function that computes and returns the maximum of two values.
+
+set serveroutput on;
+declare
+a number;
+b number;
+begin
+a:=&a;
+b:=&b;
+if (a>b)
+then
+dbms_output.put_line('Max value is a ' || a);
+else
+dbms_output.put_line('Max value is b ' || b);
+end if;
+end;
+/
+
+2. Create a table student and find the students passed and failed and insert into two tables using explicit cursors
+create table student(
+sname varchar(10),
+subject varchar(10),
+mark int);
+insert into student values('Sam','Maths',45);
+insert into student values('Tam','Maths',65);
+insert into student values('Pam','Maths',85);
+insert into student values('Cam','Maths',25);
+insert into student values('Kam','Maths',95);
+
+
+CREATE TABLE passed(
+sname varchar(10),
+subject varchar(10),
+mark int); 
+CREATE TABLE failed(
+sname varchar(10),
+subject varchar(10),
+mark int); 
+
+DECLARE
+s_sname student.sname%TYPE;
+s_subject student.subject%TYPE;
+s_mark student.mark%TYPE;
+CURSOR c IS
+SELECT sname,subject,mark
+FROM student;	
+BEGIN
+OPEN c; 
+LOOP
+FETCH c INTO s_sname,s_subject,s_mark;
+EXIT WHEN c%NOTFOUND;
+INSERT INTO passed
+(sname,
+subject,
+mark)
+VALUES
+(s_sname,
+s_subject,
+s_mark)
+WHERE(
+mark >= 50);
+INSERT INTO failed
+(sname,
+subject,
+mark)
+VALUES
+(s_sname,
+s_subject,
+s_mark)
+WHERE(
+mark < 50);
+END LOOP;
+CLOSE c;
+COMMIT; 
+END; 
+/
+
+
