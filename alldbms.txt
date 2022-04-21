@@ -1,0 +1,253 @@
+                   ** LIBRARY DATABASE **
+1) Retrieve details of all books in the library – id, title, name of publisher, authors, number of
+copies in each branch, etc.
+ SELECT LB.BRANCH_NAME, B.BOOK_ID,TITLE, PUBLISHER_NAME,AUTHOR_NAME,
+ NO_OF_COPIES
+ FROM BOOK B, BOOK_AUTHORS BA, BOOK_COPIES BC, LIBRARY_BRANCH LB
+ WHERE B.BOOK_ID = BA.BOOK_ID AND
+ BA.BOOK_ID = BC.BOOK_ID AND
+ BC.BRANCH_ID = LB.BRANCH_ID
+ GROUP BY LB.BRANCH_NAME, B.BOOK_ID, TITLE, PUBLISHER_NAME,
+ AUTHOR_NAME, NO_OF_COPIES;
+2) Get the particulars of borrowers who have borrowed more than 3 books, but from Jan 2017
+ to Jun 2017.
+ SELECT CARD_NO
+ FROM BOOK_LENDING
+ WHERE DATE_OUT BETWEEN '01-JAN-2017' AND '30-JUN-2017'
+ GROUP BY CARD_NO
+ HAVING COUNT(*) > 3;
+3) Delete a book in BOOK table. Update the contents of other tables to reflect this data
+manipulation operation.
+DELETE FROM BOOK
+WHERE BOOK_ID = '3333';
+4) Partition the BOOK table based on year of publication. Demonstrate its working with a
+simple query.
+SELECT BOOK_ID, TITLE, PUBLISHER_NAME, PUB_YEAR
+ FROM BOOK
+ GROUP BY PUB_YEAR, BOOK_ID, TITLE, PUBLISHER_NAME;
+5) Create a view of all books and its number of copies that are currently available in the
+Library.
+CREATE VIEW BOOKS_AVAILABLE AS
+ SELECT B.BOOK_ID, B.TITLE, C.NO_OF_COPIES
+ FROM LIBRARY_BRANCH L, BOOK B, BOOK_COPIES C
+ WHERE B.BOOK_ID = C.BOOK_ID AND
+ L.BRANCH_ID=C.BRANCH_ID;
+
+                   ** COMPANY DATABASE **
+
+1. Make a list of all project numbers for projects that involve an employee whose last
+name is ‘Scott’, either as a worker or as a manager of the department that controls the
+project.
+(SELECT DISTINCT PNO
+FROM PROJECT P, DEPARTMENT D,
+EMPLOYEE E WHERE P.DNO=D.DNO AND
+SSN=MGRSSN AND
+NAME='SCOTT')
+UNION
+(SELECT DISTINCT P.PNO
+FROM PROJECT P, WORKS_ON W,
+EMPLOYEE E WHERE P.PNO=W.PNO AND
+W.SSN=E.SSN AND
+NAME='SCOTT');
+2. Show the resulting salaries if every employee working on the ‘IoT’ project is given a 10
+percent raise.
+SELECT FNAME, LNAME, 1.1*SALARY AS INCR_SAL
+FROM EMPLOYEE E, WORKS_ON W, PROJECT P
+WHERE E.SSN=W.SSN AND
+W.PNO=P.PNO AND
+P.PNAME=’IOT’;
+3. Find the sum of the salaries of all employees of the ‘Accounts’ department, as well as the
+maximum salary, the minimum salary, and the average salary in this department.
+SELECT SUM(SALARY), MAX(SALARY), MIN(SALARY),
+AVG(SALARY) FROM EMPLOYEE E, DEPARTMENT D
+WHERE DNAME='ACCOUNTS' AND
+D.DNO=E.DNO;
+4. Retrieve the name of each employee who works on all the projects controlled by
+department number 5 (use NOT EXISTS operator).
+SELECT NAME FROM
+EMPLOYEE E
+WHERE NOT EXISTS( (SELECT PNO
+FROM ROJECT
+WHERE
+DNO=5)
+MINUS
+(SELECT PNO
+FROM WORKS_ON W
+WHERE E.SSN=W.SSN))
+5. For each department that has more than five employees, retrieve the department number
+and the number of its employees who are making more than Rs. 6,00,000.
+SELECT DNO,COUNT(SSN)
+FROM EMPLOYEE
+WHERE SALARY>600000 AND DNO
+IN(SELECT DNO
+FROM EMPLOYEE
+GROUP BY DNO
+HAVING COUNT(SSN)>5)
+GROUP BY DNO ;
+
+                   ** COLLEGE DATABASE **
+1. List all the student details studying in fourth semester ‘C’ section.
+select
+s.usn,sname,address,phone,gender from
+student s, class c, semsec ss where
+sem=4 and
+sec='c' and
+ss.ssid=c.ssid and
+c.usn=s.usn;
+2. Compute the total number of male and female students in each semester and in each
+section.
+SELECT SEM,SEC,GENDER,COUNT(*)
+FROM STUDENT S, SEMSEC SS,CLASS C
+WHERE S.USN=C.USN AND
+C.SSID=SS.SSID
+GROUP BY SEM,SEC,GENDER
+ORDER BY SEM;
+3. Create a view of Test1 marks of student USN ‘1BI15CS101’ in all subjects.
+CREATE VIEW TEST1 AS
+SELECT SUBCODE,TEST1
+FROM IAMARKS
+WHERE USN='1cg15ee065';
+View created.
+4. Calculate the FinalIA (average of best two test marks) and update the corresponding table
+for all students.
+CREATE OR REPLACE PROCEDURE AVG
+IS
+CURSOR C_IAMARKS IS
+SELECT GREATEST(TEST1,TEST2) AS A,GREATEST(TEST1,TEST3) AS B,
+GREATEST(TEST3,TEST2) AS C
+FROM IAMARKS
+WHERE FINALIA IS NULL
+FOR UPDATE;
+C_A NUMBER;
+C_B NUMBER;
+C_C NUMBER;
+C_SM NUMBER;
+C_AV NUMBER;
+BEGIN
+OPEN C_IAMARKS;
+LOOP
+FETCH C_IAMARKS INTO C_A,C_B,C_C;
+EXIT WHEN C_IAMARKS%NOTFOUND;
+DBMS_OUTPUT.PUT_LINE(C_A||' '||C_B||' '||C_C);
+IF(C_A!=C_B) THEN
+C_SM:=C_A+C_B;
+ELSE
+C_SM:=C_A+C_C;
+END IF;
+C_AV:=C_SM/2;
+DBMS_OUTPUT.PUT_LINE('SUM='||C_SM);
+DBMS_OUTPUT.PUT_LINE('AVERAGE='||C_AV);
+UPDATE IAMARKS
+SET FINALIA=C_AV
+WHERE CURRENT OF C_IAMARKS;
+END LOOP;
+CLOSE C_IAMARKS;
+END AVG;
+
+SQL> BEGIN
+2 AVG;
+3 END;
+
+5. Categorize students based on the following criterion:
+If FinalIA = 17 to 20 then CAT = ‘Outstanding’ If
+FinalIA = 12 to 16 then CAT = ‘Average’
+If FinalIA< 12 then CAT = ‘Weak’
+Give these details only for 8th semester A, B, and C section students.
+SELECT S.USN,S.SNAME,S.ADDRESS,S.PHONE,S.GENDER,
+CASE WHEN IA.FINALIA BETWEEN 17 AND 20 THEN 'OUTSTANDING'
+WHEN IA.FINALIA BETWEEN 12 AND 16 THEN 'AVERAGE'
+ELSE 'WEAK'
+END AS CAT
+FROM STUDENT S,SEMSEC SS,IAMARKS IA,SUBJECT SUB
+WHERE S.USN=IA.USN AND
+SS.SSID=IA.SSID AND
+SUB.SUBCODE=IA.SUBCODE AND
+SUB.SEM=7
+ 
+                   ** ORDER DATABASE **
+1. Count the customers with grades above Bangalore’s average.
+ SELECT COUNT(CUSTOMER_ID)
+ FROM CUSTOMER
+ WHERE GRADE>(SELECT AVG(GRADE)
+ FROM CUSTOMER
+ WHERE CITY LIKE '%BENGALURU');
+2. Find the name and numbers of all salesmen who had more than one customer.
+ SELECT NAME, COUNT(CUSTOMER_ID)
+ FROM SALESMAN S, CUSTOMER C
+ WHERE S.SALESMAN_ID=C.SALESMAN_ID
+ GROUP BY NAME
+ HAVING COUNT(CUSTOMER_ID)>1;
+3. List all salesmen and indicate those who have and don’t have customers in their cities
+(Use UNION operation.)
+
+ (SELECT NAME
+ FROM SALESMAN S, CUSTOMER C
+ WHERE S.SALESMAN_ID=C.SALESMAN_ID AND
+ S.CITY=C.CITY)
+ UNION
+ (SELECT NAME
+ FROM SALESMAN
+ WHERE SALESMAN_ID NOT IN(SELECT S1.SALESMAN_ID
+ FROM SALESMAN S1, CUSTOMER C1
+ WHERE S1.SALESMAN_ID=C1.SALESMAN_ID AND
+ S1.CITY=C1.CITY));
+4. Create a view that finds the salesman who has the customer with the highest order of a
+day.
+CREATE VIEW SALES_HIGHERODER AS
+SELECT SALESMAN_ID, PURCHASE_AMT
+FROM ORDERS
+WHERE PURCHASE_AMT=(SELECT MAX(O.PURCHASE_AMT)
+ FROM ORDERS O
+WHERE O.ORD_DATE='12-APR-16');
+5. Demonstrate the DELETE operation by removing salesman with id 1000. All his orders
+must also be deleted.
+DELETE from salesman
+WHERE salesman_id = 1000;
+
+      ** MOVIE DATABASE**
+      
+1. List the titles of all movies directed by ‘Hitchcock’.
+SELECT MOV_TITLE
+FROM MOVIES M, DIRECTOR D
+WHERE D.DIR_ID=M.DIR_ID AND
+ DIR_NAME='HITCHCOCK';
+2. Find the movie names where one or more actors acted in two or more movies.
+SELECT MOV_TITLE
+FROM MOVIES M, MOVIE_CAST MC
+WHERE M.MOV_ID=MC.MOV_ID AND
+ MC.ACT_ID IN (SELECT ACT_ID
+ FROM MOVIE_CAST
+GROUP BY ACT_ID
+ HAVING COUNT(MOV_ID)>=2);
+3. List all actors who acted in a movie before 2000 and also in a movie after
+2015 (use JOIN operation).
+(SELECT ACT_NAME
+FROM ACTOR A
+JOIN MOVIE_CAST C
+ON
+A.ACT_ID=C.ACT_ID
+JOIN MOVIES M
+ON C.MOV_ID=M.MOV_ID
+WHERE M.MOV_YEAR < 2000)
+INTERSECT
+(SELECT ACT_NAME
+FROM ACTOR A JOIN
+MOVIE_CAST C
+ON A.ACT_ID=C.ACT_ID JOIN
+MOVIES M
+ON C.MOV_ID=M.MOV_ID
+WHERE M.MOV_YEAR > 2015);
+4. Find the title of movies and number of stars for each movie that has at least one
+rating and find the highest number of stars that movie received. Sort the result by
+movie title.
+SELECT MOV_TITLE, REV_STARS
+FROM MOVIES M, RATING R
+WHERE M.MOV_ID=R.MOV_ID AND
+REV_STARS>=1 ORDER BY MOV_TITLE
+5. Update rating of all movies directed by ‘Steven Spielberg’ to 5.
+UPDATE RATING
+SET REV_STARS=5
+WHERE MOV_ID IN (SELECT MOV_ID
+FROM MOVIES M, DIRECTOR D
+WHERE M.DIR_ID=D.DIR_ID AND
+DIR_NAME='STEVEN SPIELBERG');
