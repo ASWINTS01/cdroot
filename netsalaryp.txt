@@ -1,0 +1,26 @@
+declare
+    ename varchar2(15);
+    basic number;
+    da number;
+    hra number;
+    pf number;
+    netsalary number;
+begin
+    ename:='&ename';
+    basic:=&basic;
+    da:=basic * (30/100);
+    hra:=basic * (10/100);
+        if (basic < 8000)
+    then
+        pf:=basic * (8/100);
+        elsif (basic >= 8000 and basic <= 16000)
+    then
+        pf:=basic * (10/100);
+             
+end if;
+        netsalary:=basic + da + hra -pf;
+ 
+dbms_output.put_line('Employee name : ' || ename);
+dbms_output.put_line('Providend Fund : ' || pf);
+dbms_output.put_line('Net salary : ' || netsalary);
+end;
